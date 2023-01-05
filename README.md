@@ -72,3 +72,72 @@ kubectl patch -n kube-system deployment metrics-server --type=json \
 ## Scale down issue discussion
 
 [link](https://stackoverflow.com/questions/58535208/hpa-scale-down-not-happening-properly)
+
+## HPA need 'request' to be defined
+
+If you add container in your pod defination for which 'request' is not defined HPA won't work. To reproduce use following resource-eater.yml instead
+
+```sh
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: resource-eater-deployment
+  labels:
+    app: resource-eater
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: resource-eater
+  template:
+    metadata:
+      labels:
+        app: resource-eater
+    spec:
+      containers:
+      - name: resource-eater
+        image: hemant24/resource-eater:latest
+        imagePullPolicy: Always # IfNotPresent
+        ports:
+        - containerPort: 8080
+        resources:
+          requests:
+            memory: "250Mi"
+            cpu: "100m"
+          limits:
+            memory: "350Mi"
+            cpu: "300m"
+      - name: resource-eater-2
+        image: hemant24/resource-eater:latest
+        imagePullPolicy: Always # IfNotPresent
+        env:
+          - name: SERVER_PORT
+            value : "8081"
+        ports:
+        - containerPort: 8081
+
+---
+
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: resource-eater
+  namespace: default
+spec:
+  type: NodePort #LoadBalancer
+  selector:
+    app: resource-eater
+  ports:
+  - port: 8080
+    targetPort: 8080
+    nodePort: 30000
+    name : eater-1
+  - port: 8081
+    targetPort: 8081
+    nodePort: 30001
+    name : eater-2
+
+
+```
