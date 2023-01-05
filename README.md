@@ -68,3 +68,7 @@ You need to patch metric server, as metioned [here](https://gist.github.com/sank
 kubectl patch -n kube-system deployment metrics-server --type=json \
   -p '[{"op":"add","path":"/spec/template/spec/containers/0/args/-","value":"--kubelet-insecure-tls"}]'
 ```
+
+## Scale down issue discussion
+
+[link](https://stackoverflow.com/questions/58535208/hpa-scale-down-not-happening-properly)
